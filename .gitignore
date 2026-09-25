@@ -1,0 +1,36 @@
+# Data & Datasets
+*.csv
+*.tsv
+*.json
+
+# Documents & Reports
+*.pdf
+
+# PyTorch Model Checkpoints & Weights
+*.pt
+*.pth
+*.bin
+*.onnx
+
+# Python Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# Environment Variables / Configs
+.env
+
+# OS / Editor Specific Files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

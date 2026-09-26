@@ -6,6 +6,9 @@
 # Documents & Reports
 *.pdf
 
+#images 
+.png
+
 # PyTorch Model Checkpoints & Weights
 *.pt
 *.pth

@@ -78,15 +78,12 @@ This repository implements a **Bidirectional LSTM (BiLSTM)** architecture traine
 ```text
 .
 ├── RNN/
-│   ├── train_bilstm.ipynb      # Main training, EDA, and evaluation notebook
-│   ├── inference_test.ipynb    # Inference script for testing dummy/unseen prompts
+│   ├── EDA_2.ipynb             # Exploratory Data Analysis for cellula toxic data.csv
+│   ├── LSTM_train.ipynb        # Main training, and evaluation notebook
+│   ├── Testing_LSTM.ipynb      # Inference script for testing dummy/unseen prompts
+│   ├── cellula toxic data.csv  # Dataset file
 │   ├── bilstm_toxicity_model.pth # Saved PyTorch model weights
 │   ├── vocab.pkl               # Saved custom Vocabulary dictionary
 │   └── label_encoder.pkl       # Saved Scikit-Learn LabelEncoder instance
-├── assets/
-│   ├── learning_curves.png     # Train vs Val Loss & Validation F1 curves
-│   └── confusion_matrix.png    # Test evaluation confusion matrix heatmap
-├── cellula toxic data.csv      # Dataset file
-├── Report.pdf                  # Full project storyline & evaluation report
-├── LICENSE                     # MIT License
+├── LICENSE                     
 └── README.md                   # Project documentation

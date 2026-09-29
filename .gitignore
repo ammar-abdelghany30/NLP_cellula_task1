@@ -1,24 +1,31 @@
+# ==========================================
 # Data & Datasets
+# ==========================================
 *.csv
 *.tsv
 *.json
+# GloVe embeddings folder and downloaded archives
+glove/
+*.txt
+*.zip
 
-# Documents & Reports
+# ==========================================
+# Generated Assets & Artifacts (Images & Models)
+# ==========================================
+*.png
 *.pdf
+*.pkl
 
-.pkl
-.pth
-
-#images 
-.png
-
-# PyTorch Model Checkpoints & Weights
+# PyTorch & Model Checkpoints
 *.pt
 *.pth
 *.bin
 *.onnx
 
-# Python Virtual Environments
+# ==========================================
+# Python & Environment Files
+# ==========================================
+# Virtual Environments
 .venv/
 venv/
 env/
@@ -29,13 +36,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Jupyter Notebook Checkpoints
+# Jupyter Notebook Checkpoints (Keeps .ipynb files tracked, ignores autosaves)
 .ipynb_checkpoints/
 
-# Environment Variables / Configs
+# Environment Variables & Configs
 .env
 
-# OS / Editor Specific Files
+# ==========================================
+# OS & Editor Specific Files
+# ==========================================
 .DS_Store
 Thumbs.db
 .vscode/

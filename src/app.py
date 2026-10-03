@@ -2,8 +2,11 @@ import streamlit as st
 from PIL import Image
 
 from imagecaption import generate_caption
-from model_loader import load_bilstm_pipeline, predict_toxicity
+from model_loader import load_bilstm_pipeline, predict_toxicity , Vocabulary
 from database import log_to_db, get_all_records
+
+import __main__
+__main__.Vocabulary = Vocabulary
 
 st.set_page_config(page_title="Toxic Content Classifier", layout="wide")
 

@@ -140,14 +140,23 @@ def predict_toxicity(text: str, model, vocab) -> dict:
     cleaned = clean_text(text)
     encoded = vocab.encode(cleaned, max_len=150)
     tensor_input = torch.tensor([encoded], dtype=torch.long).to(device)
-
+    
     with torch.no_grad():
         logits = model(tensor_input)
         probs = torch.sigmoid(logits).cpu().numpy()[0]
-
-    results = {}
+        
+    triggered_labels = []
+    
     for idx, col in enumerate(label_cols):
         prob = float(probs[idx])
         thresh = OPTIMAL_THRESHOLDS[col]
-        results[col] = {"probability": round(prob, 4), "is_toxic": bool(prob >= thresh)}
-    return results
+        if prob >= thresh:
+            triggered_labels.append(col)
+            
+    is_overall_toxic = len(triggered_labels) > 0
+    
+    return {
+        'status': 'TOXIC' if is_overall_toxic else 'CLEAN',
+        'triggered_labels': triggered_labels if is_overall_toxic else ['none'],
+        'summary': f"TOXIC ({', '.join(triggered_labels)})" if is_overall_toxic else "CLEAN"
+    }

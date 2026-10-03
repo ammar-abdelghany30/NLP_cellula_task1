@@ -1,4 +1,4 @@
-# 🛡️ Multimodal & Multi-Label Toxic Content Moderation System
+# 🛡️ Multi-Label Toxic Content Moderation System
 
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg)](https://pytorch.org/)
@@ -177,16 +177,6 @@ The app will open automatically in your browser at `http://localhost:8501`.
 
 ---
 
-## 🧠 Key Modules & API Reference
-
-- [`BiLSTMToxicityModel`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L77-L110): 2-layer Bidirectional LSTM featuring global max pooling and dropout regularization.
-- [`Vocabulary`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L22-L55): Custom tokenization, vocabulary mapping, and sequence padding engine (`max_len=150`).
-- [`load_bilstm_pipeline`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L116-L137): Loads model state dict and vocabulary cache with automatic CPU/CUDA selection.
-- [`predict_toxicity`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L139-L153): Cleans raw text, extracts logits, applies Sigmoid, and returns decisions using [`OPTIMAL_THRESHOLDS`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L11-L18).
-- [`generate_caption`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/imagecaption.py#L10-L23): Generates conditional descriptions from images using Salesforce BLIP.
-- [`log_to_db`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/database.py#L15-L27): Appends classification events and probabilities into [`classification_database.csv`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/classification_database.csv).
-
----
 
 ## ⚖️ License
 

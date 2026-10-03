@@ -64,8 +64,19 @@ with tab1:
 # --- TAB 2: DATABASE VIEWER ---
 with tab2:
     st.subheader("Database Audit Trail (`classification_database.csv`)")
-    if st.button("Refresh Table"):
-        st.rerun()
+    
+    col1, col2 = st.columns([1, 5])
+    with col1:
+        if st.button("Refresh Table"):
+            st.rerun()
+    with col2:
+        if st.button("🗑️ Clear All Database Records", type="secondary"):
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            db_path = os.path.join(base_dir, "classification_database.csv")
+            if os.path.exists(db_path):
+                os.remove(db_path)
+            st.success("Database erased! A fresh database will be initialized on the next submission.")
+            st.rerun()
         
     df = get_all_records()
     if not df.empty:

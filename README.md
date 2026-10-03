@@ -1,89 +1,194 @@
-# 🛡️ Multimodal Content Moderation with Bidirectional LSTM
+# 🛡️ Multimodal & Multi-Label Toxic Content Moderation System
 
-A PyTorch-based Deep Learning model designed to detect safety violations and toxic categories in multimodal user interactions. By evaluating combined text sequences containing both **user queries** and **image descriptions**, the model achieves robust multi-class toxicity classification across 9 safety categories.
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-EE4C2C.svg)](https://pytorch.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-FF4B4B.svg)](https://streamlit.io/)
+[![HuggingFace Transformers](https://img.shields.io/badge/HuggingFace-Transformers-yellow.svg)](https://huggingface.co/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
----
-
-## 📌 Project Overview
-
-Modern AI assistants (e.g., ChatGPT with Vision, Gemini) evaluate safety based on the **interaction context** between text prompts and accompanying visual scenes. Toxicity often exists not in isolation, but in the combination of inputs:
-- An innocent query (*"Real estate advice"*) paired with a dangerous image (*"Crime scene with police tape"*) indicates a **Violent Crime** context.
-- A benign image (*"Family picnic"*) paired with a cyberattack query (*"DDoS botnet guide"*) indicates an **Unknown S-Type / Cyber Threat**.
-
-This repository implements a **Bidirectional LSTM (BiLSTM)** architecture trained to classify these interactions and enforce safety standards.
+An end-to-end Deep Learning system designed to identify and classify abusive, harmful, and safety-violating content across text prompts and visual media. The project integrates **Bidirectional LSTM (BiLSTM)** architectures, **Salesforce BLIP** vision-language models for image captioning, and an interactive **Streamlit** dashboard backed by an audit trail database.
 
 ---
 
-## 🚀 Key Results & Performance
+## 🎯 Project Goals & Motivation
 
-- **Target Metric**: Weighted F1 Score $\ge 0.75$
-- **Achieved Test Weighted F1**: **`0.9465` (94.65%)**
-- **Test Accuracy**: **`94.89%`** (427 / 450 test samples correctly classified)
-
-### Classification Report Summary
-
-| Toxicity Category | Precision | Recall | F1-Score | Support |
-| :--- | :---: | :---: | :---: | :---: |
-| **Child Sexual Exploitation** | 1.00 | 1.00 | **1.00** | 15 |
-| **Elections** | 1.00 | 1.00 | **1.00** | 17 |
-| **Non-Violent Crimes** | 0.94 | 0.98 | **0.96** | 45 |
-| **Safe** | 0.89 | 0.99 | **0.94** | 150 |
-| **Sex-Related Crimes** | 1.00 | 0.94 | **0.97** | 17 |
-| **Suicide & Self-Harm** | 1.00 | 1.00 | **1.00** | 17 |
-| **Unknown S-Type** | 0.94 | 0.59 | **0.72** | 29 |
-| **Violent Crimes** | 0.99 | 0.94 | **0.97** | 119 |
-| **Unsafe** | 1.00 | 1.00 | **1.00** | 41 |
+Modern online platforms, forums, and AI assistants (like ChatGPT with Vision or Gemini) face sophisticated toxicity and safety challenges:
+1. **Multi-Label Fine-Grained Toxicity**: Toxic expressions rarely belong to a single bucket; an abusive statement can be simultaneously obscene, insulting, and identity-directed. The system accurately predicts 6 distinct toxicity facets.
+2. **Cross-Modal / Visual Moderation**: Toxicity is often conveyed visually through images, memes, or screenshots. Using automated image captioning (BLIP), visual inputs are converted to descriptive text and screened using the moderation engine.
+3. **Severe Class Imbalance & Real-World Utility**: Real-world toxicity is sparse (categories like `threat` and `identity_hate` represent $<1\%$ of data). The project implements class weighting and per-label threshold calibration to maximize recall on safety-critical classes without flooding false alarms.
+4. **Transparent Auditability**: Moderation events, probability scores, and inputs are logged into an audit trail database for review and governance.
 
 ---
 
-## ⚙️ How It Works
+## 🏗️ System Architecture & Workflow Pipeline
 
-1. **Feature Concatenation (`sep` boundary)**:
-   The model concatenates the user query and image description using an explicit boundary token:
-   $$\text{Input} = \text{Query} + \text{" sep "} + \text{Image Description}$$
-   This structural anchor prevents modal confusion and allows the network to process prompt intent and visual context separately.
+```mermaid
+flowchart TD
+    subgraph Inputs ["Input Modalities"]
+        A1["📝 Direct Text Prompt"]
+        A2["🖼️ Uploaded Image"]
+    end
 
-2. **Custom Tokenization & Padding**:
-   Texts are tokenized using a custom `Vocabulary` class (`max_size=5000`) and padded/truncated to a sequence length of `36` tokens, capturing $>95\%$ of sample lengths.
+    subgraph VisionEngine ["Vision-Language Processing"]
+        B["Salesforce BLIP Captioning<br/>(Salesforce/blip-image-captioning-base)"]
+    end
 
-3. **BiLSTM Network Architecture**:
-   - **Embedding Layer**: Converts token IDs into dense 128-dimensional vectors.
-   - **2-Layer Bidirectional LSTM**: Processes sequences forward and backward to extract temporal/semantic context.
-   - **Global Max Pooling**: Extracts the strongest feature activations across the sequence.
-   - **Dense Classification Head**: Fully connected layers with ReLU activation, Dropout ($p=0.3$), and 9-class Softmax outputs.
+    subgraph Preprocessing ["NLP Pipeline"]
+        C["Text Normalization & Cleaning<br/>(Contractions, URLs, IPs, Punctuation)"]
+        D["Custom Vocabulary Encoding<br/>(Tokenization, Padding & Truncation)"]
+    end
 
-4. **Class Weighting & Early Stopping**:
-   - Applied class weights to `nn.CrossEntropyLoss` to handle severe class imbalance (minority classes make up only ~3.4% of data).
-   - Utilized **Early Stopping** based on validation loss to prevent overfitting and checkpoint optimal model weights.
+    subgraph ModelEngine ["Deep Learning Architecture"]
+        E["Embedding Layer (vocab=25,000, dim=250)"]
+        F["2-Layer Bidirectional LSTM (hidden=128)"]
+        G["Global Max Pooling (Extract Peak Activations)"]
+        H["FC Head + ReLU + Dropout (0.3)"]
+        I["Sigmoid Probability Outputs"]
+    end
+
+    subgraph DecisionEngine ["Threshold & Delivery"]
+        J["Per-Class Calibrated Thresholds<br/>(toxic: 0.42, threat: 0.06, etc.)"]
+        K["Streamlit Interactive UI<br/>(Metric Cards & Visual Badges)"]
+        L["Audit Trail Database<br/>(classification_database.csv)"]
+    end
+
+    A1 --> C
+    A2 --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    J --> L
+```
 
 ---
 
-## ⚖️ Pros & Cons
-
-### ✅ Pros
-- **High Benchmark Performance**: Achieves $>94\%$ F1 score across diverse safety categories.
-- **Handles Class Imbalance**: Perfect recall ($1.00$) on critical minority categories (*Child Sexual Exploitation*, *Suicide & Self-Harm*).
-- **Fast Execution**: Compact memory footprint (~5000 vocabulary size); trains and runs inference quickly on CPU/GPU.
-- **Structural Boundary Awareness**: Inclusion of `sep` token significantly reduced false positives between `Unknown S-Type` and `Safe`.
-
-### ❌ Cons / Limitations
-- **Shortcut Learning (Spurious Correlations)**: Because embeddings were trained from scratch on 3,000 samples, the model sometimes relies on single keyword associations (e.g., assuming *"laptop"* always implies a *Non-Violent Crime*).
-- **Lack of Deep Semantic Context**: Fails on subtle edge cases or reworded prompts outside the specific synthetic dataset distributions.
-- **Lower Recall on `Unknown S-Type`**: Ambiguous queries paired with neutral images achieve lower recall ($0.59$), occasionally defaulting to `Safe`.
-
----
-
-## 📁 Project Structure
+## 📁 Repository Structure
 
 ```text
 .
-├── RNN/
-│   ├── EDA_2.ipynb             # Exploratory Data Analysis for cellula toxic data.csv
-│   ├── LSTM_train.ipynb        # Main training and evaluation notebook
-│   ├── Testing_LSTM.ipynb      # Inference script for testing dummy/unseen prompts
-│   ├── cellula toxic data.csv  # Dataset file
-│   ├── bilstm_toxicity_model.pth # Saved PyTorch model weights
-│   ├── vocab.pkl               # Saved custom Vocabulary dictionary
-│   └── label_encoder.pkl       # Saved Scikit-Learn LabelEncoder instance
-├── LICENSE                     # Apache License 2.0
+├── src/                                     # Production application and inference engine
+│   ├── app.py                               # Streamlit web interface with interactive tabs
+│   ├── model_loader.py                      # BiLSTMToxicityModel architecture & inference pipeline
+│   ├── database.py                          # Audit logging engine and CSV database handler
+│   ├── imagecaption.py                      # BLIP image caption generation module
+│   ├── best_bilstm_LargeSet.pth             # Trained PyTorch checkpoint (Large Dataset)
+│   ├── vocab.pkl                            # Serialized vocabulary dictionary
+│   └── classification_database.csv          # Persistent audit trail log
+│
+├── Notebooks/
+│   ├── LSTM on large dataset/               # Track 2: 160k-sample Multi-Label Toxicity Project
+│   │   ├── Cleaning&Preprocessing.ipynb     # Text preprocessing, vocab generation & BiLSTM training
+│   │   ├── EDA_for_Largeset.ipynb           # Distribution, token length & label co-occurrence analysis
+│   │   ├── make_sure_no_leakge.ipynb        # Dataset split verification and leakage checks
+│   │   ├── test_data_check.ipynb            # Kaggle test evaluation and valid ID filtering
+│   │   ├── train.csv / test.csv             # Kaggle Jigsaw Toxic Comment dataset files
+│   │   ├── best_bilstm_LargeSet.pth         # Saved weights for large-scale model
+│   │   ├── best_bilstm_no_glove.pth         # Ablation checkpoint without GloVe
+│   │   └── valid_test_ids.pkl               # Filtered non-(-1) evaluation IDs
+│   │
+│   └── LSTM/                                # Track 1: Multimodal 9-Category Safety Interaction
+│       ├── EDA_2.ipynb                      # Exploratory data analysis for multimodal interactions
+│       ├── LSTM_train.ipynb                 # BiLSTM training with synthetic prompt-image boundaries
+│       ├── LSTM+pretrained_vector.ipynb     # Transfer learning experiment with GloVe 100d
+│       ├── Testing_LSTM.ipynb               # Ad-hoc prompt inference and evaluation
+│       ├── cellula toxic data.csv           # Interaction dataset (query + image description)
+│       ├── bilstm_toxicity_model.pth        # Saved checkpoint for 9-class safety model
+│       └── glove/                           # GloVe 6B word embeddings
+│
+├── LICENSE                                  # Apache License 2.0
+├── README.md                                # Project documentation
+└── .gitignore                               # Git ignored files & environments
+```
+
+---
+
+## 🧪 Experimental Tracks & Results
+
+The project was executed across two distinct developmental phases:
+
+### 1. Large-Scale Multi-Label Toxicity Classification (Primary Model in `src/`)
+Trained on the 160,000-sample Kaggle / Jigsaw Toxic Comment dataset to identify 6 toxicity categories simultaneously:
+
+- **Validation ROC-AUC**: **`0.9680`**
+- **Test ROC-AUC**: **`0.9558`**
+- **Optimal Decision Thresholds** (calibrated to counter extreme class imbalance):
+  | Category | Optimal Threshold | Default Threshold | Motivation |
+  | :--- | :---: | :---: | :--- |
+  | **`threat`** | **0.06** | 0.50 | Extreme sparsity (<1% of samples); ensures critical threats are not missed. |
+  | **`identity_hate`** | **0.15** | 0.50 | High social harm; prioritizing sensitive recall. |
+  | **`severe_toxic`** | **0.31** | 0.50 | Captures high-severity toxicity while suppressing noise. |
+  | **`toxic`** | **0.42** | 0.50 | High frequency base class; calibrated near parity. |
+  | **`insult`** | **0.45** | 0.50 | Balanced precision and recall. |
+  | **`obscene`** | **0.49** | 0.50 | High-frequency explicit terms. |
+
+### 2. Multimodal Safety Policy Interaction Classification
+Trained on cross-modal user interactions (`query` + `" sep "` + `image descriptions`) across 9 safety categories:
+- **Test Weighted F1 Score**: **`0.9465` (94.65%)**
+- **Test Accuracy**: **`94.89%`**
+- **Minority Class Performance**: Perfect $1.00$ recall achieved on *Child Sexual Exploitation* and *Suicide & Self-Harm*.
+
+---
+
+## 💻 Interactive Streamlit Application
+
+The deployment application in [`src/app.py`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/app.py) provides an intuitive, real-time interface:
+
+1. **Direct Text & Image Moderation**:
+   - **Text Mode**: Input any comment or prompt to run instant toxicity inference.
+   - **Image Mode**: Upload `.jpg`, `.jpeg`, or `.png` images. [`generate_caption`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/imagecaption.py#L10-L23) automatically describes the scene using BLIP before passing it to the BiLSTM classifier.
+2. **Multi-Label Metric Cards**:
+   - Displays real-time status badges (`🚨 TOXIC` vs `✅ CLEAN`) with calibrated percentage confidence scores for each of the 6 classes.
+3. **Audit Trail Database Viewer**:
+   - Every inference request is persisted to [`classification_database.csv`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/classification_database.csv) with timestamp, input type, input text, and predicted labels.
+   - Users can inspect and refresh the historical audit log directly from the UI.
+
+---
+
+## 🚀 Quickstart & Setup
+
+### 1. Prerequisites & Environment Setup
+Clone the repository and activate your Python virtual environment:
+```powershell
+git clone <repo-url>
+cd "Project_1 Toxic text classifications"
+
+# Activate existing virtual environment (Windows PowerShell)
+.\.venv\Scripts\Activate.ps1
+```
+
+### 2. Install Required Dependencies
+Ensure the necessary packages are installed:
+```powershell
+pip install torch torchvision transformers streamlit pandas pillow scikit-learn
+```
+
+### 3. Launch the Streamlit App
+Start the web dashboard:
+```powershell
+streamlit run src/app.py
+```
+The app will open automatically in your browser at `http://localhost:8501`.
+
+---
+
+## 🧠 Key Modules & API Reference
+
+- [`BiLSTMToxicityModel`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L77-L110): 2-layer Bidirectional LSTM featuring global max pooling and dropout regularization.
+- [`Vocabulary`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L22-L55): Custom tokenization, vocabulary mapping, and sequence padding engine (`max_len=150`).
+- [`load_bilstm_pipeline`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L116-L137): Loads model state dict and vocabulary cache with automatic CPU/CUDA selection.
+- [`predict_toxicity`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L139-L153): Cleans raw text, extracts logits, applies Sigmoid, and returns decisions using [`OPTIMAL_THRESHOLDS`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/model_loader.py#L11-L18).
+- [`generate_caption`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/imagecaption.py#L10-L23): Generates conditional descriptions from images using Salesforce BLIP.
+- [`log_to_db`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/database.py#L15-L27): Appends classification events and probabilities into [`classification_database.csv`](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/src/classification_database.csv).
+
+---
+
+## ⚖️ License
+
+This project is licensed under the [Apache License 2.0](file:///c:/Desktop/desktop/Summer interns/Cellula NLP/Project_1 Toxic text classifications/LICENSE).
 └── README.md                   # Project documentation

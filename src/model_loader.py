@@ -146,10 +146,12 @@ def predict_toxicity(text: str, model, vocab) -> dict:
         probs = torch.sigmoid(logits).cpu().numpy()[0]
         
     triggered_labels = []
+    raw_probs = {}
     
     for idx, col in enumerate(label_cols):
         prob = float(probs[idx])
         thresh = OPTIMAL_THRESHOLDS[col]
+        raw_probs[col] = prob
         if prob >= thresh:
             triggered_labels.append(col)
             
@@ -158,5 +160,6 @@ def predict_toxicity(text: str, model, vocab) -> dict:
     return {
         'status': 'TOXIC' if is_overall_toxic else 'CLEAN',
         'triggered_labels': triggered_labels if is_overall_toxic else ['none'],
-        'summary': f"TOXIC ({', '.join(triggered_labels)})" if is_overall_toxic else "CLEAN"
+        'summary': f"TOXIC ({', '.join(triggered_labels)})" if is_overall_toxic else "CLEAN",
+        'raw_probabilities': raw_probs
     }

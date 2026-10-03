@@ -58,6 +58,18 @@ with tab1:
                     st.write(f"**Detected Toxic Categories:** {', '.join(pred_result['triggered_labels'])}")
                 else:
                     st.success("✅ **Overall Output:** CLEAN")
+
+                # --- ADD PROBABILITY EXPANDER FOR DEBUGGING ---
+                with st.expander("🔍 View Raw Probability Breakdown"):
+                    probs = pred_result.get('raw_probabilities', {})
+                    if probs:
+                        cols = st.columns(3)
+                        for idx, (lbl, val) in enumerate(probs.items()):
+                            cols[idx % 3].metric(
+                                label=lbl.replace('_', ' ').title(),
+                                value=f"{val * 100:.2f}%"
+                                )               
+
                     
                 st.caption("Result successfully logged to CSV database!")
 
